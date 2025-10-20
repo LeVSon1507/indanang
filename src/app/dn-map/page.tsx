@@ -93,15 +93,19 @@ export default function DateMapPage() {
   const { t } = useI18n();
 
   // Ensure Leaflet marker icons load on client
-  useEffect(() => {
-    (async () => {
-      L.Icon.Default.mergeOptions({
-        iconUrl: "/cursor.png",
-        iconRetinaUrl: "/cursor.png",
-        shadowUrl: "/cursor-shadow.png",
-      });
-    })();
-  }, []);
+  async function initLeafletIcons() {
+    L.Icon.Default.mergeOptions({
+      iconUrl: "/cursor.png",
+      iconRetinaUrl: "/cursor.png",
+      shadowUrl: "/cursor-shadow.png",
+    });
+  }
+
+  function setupLeafletIconsEffect() {
+    void initLeafletIcons();
+  }
+
+  useEffect(setupLeafletIconsEffect, []);
 
   return (
     <div className="min-h-screen bg-[#f0f0f0]">
@@ -110,9 +114,7 @@ export default function DateMapPage() {
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
             {t("map_title")}
           </h1>
-          <p className="text-sm mt-1">
-            {t("map_instruction")}
-          </p>
+          <p className="text-sm mt-1">{t("map_instruction")}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -136,7 +138,9 @@ export default function DateMapPage() {
                       <div className="text-sm">
                         <div className="font-bold">{p.title}</div>
                         {p.address && <div>{p.address}</div>}
-                        <div>{t("category_label")}: {t(`category_${p.category}`)}</div>
+                        <div>
+                          {t("category_label")}: {t(`category_${p.category}`)}
+                        </div>
                         <div className="mt-1 flex gap-2">
                           {p.url && (
                             <a
@@ -316,7 +320,9 @@ export default function DateMapPage() {
                     >
                       <div className="text-sm font-semibold">{s.title}</div>
                       {s.address && <div className="text-xs">{s.address}</div>}
-                      <div className="text-xs">{t(`category_${s.category ?? category}`)}</div>
+                      <div className="text-xs">
+                        {t(`category_${s.category ?? category}`)}
+                      </div>
                       <div className="text-xs">
                         ({s.lat}, {s.lng})
                       </div>
