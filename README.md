@@ -6,6 +6,8 @@
 - UI hiển thị phòng trọ với lọc thông minh
 - API `GET /api/rooms` để truy vấn dữ liệu
 - Meta API `GET /api/rooms/meta` để lấy danh sách quận, nguồn, khoảng giá/diện tích
+- Trang bản đồ hẹn hò Đà Nẵng (`/date-map`) với địa điểm thủ công hoặc gợi ý AI
+- API địa điểm: `GET/POST /api/places` và `POST /api/places/suggest`
 
 ## 📋 Yêu cầu hệ thống
 - Node.js 18+
@@ -20,6 +22,8 @@ npm install
 ```env
 MONGODB_URI=mongodb://localhost:27017/cheap_home
 MONGODB_DB=cheap_home
+# bắt buộc nếu dùng gợi ý AI
+OPENAI_API_KEY=sk-xxxx
 ```
 3. Chạy development server:
 ```bash
@@ -36,6 +40,22 @@ curl "http://localhost:3000/api/rooms?q=đà+nẵng&minPrice=1000000&maxPrice=30
 # Lấy meta (districts, sources, range)
 curl "http://localhost:3000/api/rooms/meta"
 ```
+- Trang bản đồ hẹn hò: `http://localhost:3000/date-map`
+  - Chọn vị trí trên bản đồ (click) để lấy lat/lng
+  - Thêm địa điểm thủ công với tiêu đề/địa chỉ/mô tả
+  - Dùng AI gợi ý danh sách địa điểm quanh Đà Nẵng rồi thêm từng mục
+
+## 🗺️ API Địa Điểm
+- `GET /api/places`
+  - Tham số: `q`, `category`, `center=lat,lng`, `radiusKm`, `limit`
+  - Ví dụ: `curl "http://localhost:3000/api/places?category=entertainment&center=16.047079,108.20623&radiusKm=10&limit=200"`
+- `POST /api/places`
+  - Body JSON: `{ title, description?, address?, category, lat, lng, url?, source }`
+  - Ví dụ: `curl -XPOST http://localhost:3000/api/places -H 'Content-Type: application/json' -d '{"title":"Sky36","category":"bar","lat":16.074,"lng":108.221,"source":"manual"}'`
+- `POST /api/places/suggest`
+  - Body JSON: `{ query?, category, limit?, save? }`
+  - Trả về: `{ items: Array<{ title, address?, category, lat, lng, url? }> }`
+  - Cần `OPENAI_API_KEY`
 
 ## 🔧 Tham số API `/api/rooms`
 - `q`: chuỗi tìm kiếm (tiêu đề/địa chỉ)
