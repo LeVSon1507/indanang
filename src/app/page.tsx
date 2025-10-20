@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { rooms as sampleRooms } from "@/data/rooms";
 import { Room, Source } from "@/types/room";
 import Filters from "@/components/Filters";
 import RoomCard from "@/components/RoomCard";
@@ -12,15 +11,25 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function HomePage() {
   const cheapThreshold = 2_000_000;
 
-  const districts = useMemo(
-    () => Array.from(new Set(sampleRooms.map((r) => r.district))).sort(),
-    []
-  );
-  const allSources = useMemo(
-    () =>
-      Array.from(new Set(sampleRooms.map((r) => r.source))).sort() as Source[],
-    []
-  );
+  type RoomsMeta = {
+    districts: string[];
+    sources: Source[];
+    minPrice?: number;
+    maxPrice?: number;
+    minArea?: number;
+    maxArea?: number;
+    totalCount: number;
+  };
+
+  const { data: meta } = useSWR<RoomsMeta>("/api/rooms/meta", fetcher);
+  const districts = useMemo(() => {
+    const fromMeta = Array.isArray(meta?.districts) ? meta!.districts : [];
+    return (fromMeta.length ? fromMeta : []).sort((a, b) => a.localeCompare(b));
+  }, [meta]);
+  const allSources = useMemo(() => {
+    const fromMeta = Array.isArray(meta?.sources) ? meta!.sources : [];
+    return (fromMeta.length ? fromMeta : []).sort((a, b) => a.localeCompare(b));
+  }, [meta]);
 
   const [query, setQuery] = useState("");
   const [minPrice, setMinPrice] = useState<number | "">("");
@@ -28,6 +37,11 @@ export default function HomePage() {
   const [district, setDistrict] = useState("");
   const [sources, setSources] = useState<Source[]>([]);
   const [cheapOnly, setCheapOnly] = useState(false);
+  const [minArea, setMinArea] = useState<number | "">("");
+  const [maxArea, setMaxArea] = useState<number | "">("");
+  const [sort, setSort] = useState<string>("price_asc");
+  const [ownerOnly, setOwnerOnly] = useState<boolean>(false);
+  const [hasImages, setHasImages] = useState<boolean>(false);
 
   const params = new URLSearchParams();
   if (query) params.set("q", query);
@@ -37,50 +51,24 @@ export default function HomePage() {
   if (sources.length) params.set("sources", sources.join(","));
   if (cheapOnly) params.set("cheapOnly", "true");
   params.set("cheapThreshold", String(cheapThreshold));
+  // new filters
+  if (minArea !== "") params.set("minArea", String(minArea));
+  if (maxArea !== "") params.set("maxArea", String(maxArea));
+  if (ownerOnly) params.set("ownerOnly", "true");
+  if (hasImages) params.set("hasImages", "true");
+  if (sort) params.set("sort", sort);
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading } = useSWR(
     `/api/rooms?${params.toString()}`,
     fetcher,
     { refreshInterval: 10000 }
   );
 
-  const [crawlSource, setCrawlSource] = useState<Source | "serpapi" | "">("");
-  const [crawlUrl, setCrawlUrl] = useState("");
-  const [crawlQuery, setCrawlQuery] = useState("");
-  const [crawlLoading, setCrawlLoading] = useState(false);
-  const [crawlMsg, setCrawlMsg] = useState("");
-
-  async function triggerCrawl() {
-    setCrawlLoading(true);
-    setCrawlMsg("");
-    try {
-      const payload: Record<string, unknown> = { source: crawlSource };
-      if (crawlSource === "serpapi")
-        payload.query = crawlQuery || query || "phòng trọ giá rẻ Đà Nẵng";
-      else payload.url = crawlUrl;
-      const res = await fetch("/api/crawl", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Crawl failed");
-      setCrawlMsg(
-        `Đã crawl: upserted ${json.upsertedCount ?? json.upserted ?? 0}`
-      );
-      mutate();
-    } catch (e: unknown) {
-      setCrawlMsg(e instanceof Error ? e.message : "Crawl lỗi");
-    } finally {
-      setCrawlLoading(false);
-    }
-  }
-
   const list: Room[] = useMemo(() => {
     const fromApi: Room[] = Array.isArray(data) ? (data as Room[]) : [];
-    const base: Room[] = fromApi.length ? fromApi : sampleRooms;
-    return base.sort((a, b) => a.price - b.price);
+    return fromApi.sort((a, b) => a.price - b.price);
   }, [data]);
+
 
   return (
     <div className="min-h-screen bg-[#f0f0f0]">
@@ -107,55 +95,19 @@ export default function HomePage() {
           districts={districts}
           allSources={allSources}
           cheapThreshold={cheapThreshold}
+          // new filters
+          minArea={minArea}
+          setMinArea={setMinArea}
+          maxArea={maxArea}
+          setMaxArea={setMaxArea}
+          sort={sort}
+          setSort={setSort}
+          ownerOnly={ownerOnly}
+          setOwnerOnly={setOwnerOnly}
+          hasImages={hasImages}
+          setHasImages={setHasImages}
         />
 
-        <div className="mt-3 border-2 border-black rounded-lg p-3 bg-white shadow-[6px_6px_0_0_#000]">
-          <div className="font-bold">Crawler</div>
-          <div className="mt-2 flex flex-col md:flex-row gap-2">
-            <select
-              className="border-2 border-black rounded px-2 py-1"
-              value={crawlSource}
-              onChange={(e) =>
-                setCrawlSource(e.target.value as Source | "serpapi" | "")
-              }
-            >
-              <option value="">Chọn nguồn</option>
-              <option value="serpapi">SerpApi (Google)</option>
-              <option value="phongtro123">Phongtro123</option>
-              <option value="batdongsan">Batdongsan</option>
-              <option value="chotot">Chotot</option>
-              <option value="facebook_group_pw">Facebook Group (Login)</option>
-            </select>
-            {crawlSource === "serpapi" ? (
-              <input
-                className="border-2 border-black rounded px-2 py-1 flex-1"
-                placeholder="Query SerpApi (ví dụ: phòng trọ giá rẻ Đà Nẵng)"
-                value={crawlQuery}
-                onChange={(e) => setCrawlQuery(e.target.value)}
-              />
-            ) : (
-              <input
-                className="border-2 border-black rounded px-2 py-1 flex-1"
-                placeholder="URL nguồn (ví dụ: https://www.facebook.com/groups/thuetrodanang)"
-                value={crawlUrl}
-                onChange={(e) => setCrawlUrl(e.target.value)}
-              />
-            )}
-            <button
-              className="border-2 border-black rounded px-3 py-1 bg-[#a0e7e5] font-semibold"
-              onClick={triggerCrawl}
-              disabled={
-                crawlLoading ||
-                !crawlSource ||
-                (!crawlQuery && crawlSource === "serpapi") ||
-                (!crawlUrl && crawlSource !== "serpapi")
-              }
-            >
-              {crawlLoading ? "Đang crawl…" : "Chạy crawl"}
-            </button>
-          </div>
-          {crawlMsg && <div className="mt-2 text-sm">{crawlMsg}</div>}
-        </div>
         <div className="mt-3 flex items-center gap-3">
           <span className="text-sm font-semibold border-2 border-black px-2 py-1 bg-white rounded">
             Tìm thấy {list.length} phòng
@@ -167,7 +119,7 @@ export default function HomePage() {
           )}
           {error && (
             <span className="text-xs border-2 border-black px-2 py-1 bg-[#ffb4a2] rounded">
-              Lỗi tải dữ liệu, dùng dữ liệu mẫu
+              Lỗi tải dữ liệu
             </span>
           )}
         </div>

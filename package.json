@@ -6,8 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint",
-    "crawl": "node crawler/index.mjs"
+    "lint": "eslint"
   },
   "dependencies": {
     "axios": "^1.12.2",

@@ -29,14 +29,14 @@ export interface RoomDoc extends mongoose.Document {
 const RoomSchema = new Schema<RoomDoc>(
   {
     title: { type: String, required: true },
-    price: { type: Number, required: true, index: true },
+    price: { type: Number, required: true },
     address: { type: String, required: true },
-    district: { type: String, required: true, index: true },
+    district: { type: String, required: true },
     area: { type: Number, required: true },
     images: { type: [String], default: [] },
     url: { type: String, required: true },
-    postedAt: { type: Date, required: true, index: true },
-    source: { type: String, required: true, enum: ['chotot','batdongsan','phongtro123','facebook'], index: true },
+    postedAt: { type: Date, required: true },
+    source: { type: String, required: true, enum: ['chotot','batdongsan','phongtro123','facebook'] },
     // extended fields
     location: {
       type: { type: String, enum: ['Point'], default: 'Point' },

@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cheap Home — UI và API Phòng Trọ
 
-## Getting Started
+Ứng dụng web hiển thị danh sách phòng trọ từ cơ sở dữ liệu, kèm bộ lọc theo giá, quận/huyện, nguồn, diện tích và các tiêu chí khác.
 
-First, run the development server:
+## 🚀 Tính năng
+- UI hiển thị phòng trọ với lọc thông minh
+- API `GET /api/rooms` để truy vấn dữ liệu
+- Meta API `GET /api/rooms/meta` để lấy danh sách quận, nguồn, khoảng giá/diện tích
 
+## 📋 Yêu cầu hệ thống
+- Node.js 18+
+- MongoDB (local hoặc Atlas)
+
+## 🛠️ Cài đặt
+1. Cài dependencies:
+```bash
+npm install
+```
+2. Tạo file `.env.local`:
+```env
+MONGODB_URI=mongodb://localhost:27017/cheap_home
+MONGODB_DB=cheap_home
+```
+3. Chạy development server:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎯 Sử dụng
+- Truy cập UI: `http://localhost:3000`
+- API phòng trọ:
+```bash
+# Lấy danh sách phòng trọ với các tham số tùy chọn
+curl "http://localhost:3000/api/rooms?q=đà+nẵng&minPrice=1000000&maxPrice=3000000&district=Hải Châu&sources=phongtro123,chotot&cheapOnly=true&cheapThreshold=2000000&minArea=15&maxArea=35&ownerOnly=false&hasImages=true&sort=price_asc&limit=200&page=1"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Lấy meta (districts, sources, range)
+curl "http://localhost:3000/api/rooms/meta"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔧 Tham số API `/api/rooms`
+- `q`: chuỗi tìm kiếm (tiêu đề/địa chỉ)
+- `minPrice`, `maxPrice`: giới hạn giá
+- `district`: tên quận/huyện
+- `sources`: danh sách nguồn, ví dụ `phongtro123,chotot`
+- `cheapOnly`: lọc phòng dưới ngưỡng rẻ
+- `cheapThreshold`: ngưỡng rẻ (mặc định 2,000,000)
+- `minArea`, `maxArea`: giới hạn diện tích
+- `ownerOnly`: chỉ chủ nhà
+- `hasImages`: chỉ phòng có ảnh
+- `sort`: `price_asc`, `price_desc`, `posted_desc`, `posted_asc`, `area_desc`, `area_asc`
+- `limit`, `page`: phân trang
 
-## Learn More
+## 🔄 Triển khai Production
+```bash
+npm run build
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📝 License
+MIT License
