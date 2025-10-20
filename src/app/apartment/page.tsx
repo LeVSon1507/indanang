@@ -5,7 +5,6 @@ import useSWR from "swr";
 import { Room, Source } from "@/types/room";
 import Filters from "./components/Filters";
 import RoomCard from "./components/RoomCard";
-import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
