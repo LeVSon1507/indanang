@@ -1,11 +1,5 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-
-if (!MONGODB_URI) {
-  throw new Error("Missing MONGODB_URI in environment");
-}
-
 declare global {
   var mongoose:
     | {
@@ -19,9 +13,15 @@ const cached = global.mongoose ?? { conn: null, promise: null };
 
 export async function connectToDatabase() {
   if (cached.conn) return cached.conn;
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error("Missing MONGODB_URI in environment");
+  }
+
   if (!cached.promise) {
     cached.promise = mongoose
-      .connect(MONGODB_URI, {
+      .connect(uri, {
         dbName: process.env.MONGODB_DB || "cheap_home",
       })
       .then((m) => m);
