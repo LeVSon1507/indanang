@@ -52,9 +52,7 @@ export default function DnPlacesPage() {
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
             {t("places_title")}
           </h1>
-          <p className="text-sm mt-1">
-            {t("places_instruction")}
-          </p>
+          <p className="text-sm mt-1">{t("places_instruction")}</p>
           <div className="mt-3 flex gap-2">
             <Link href="/dn-map" className={btn}>
               {t("open_map")}
@@ -88,13 +86,11 @@ export default function DnPlacesPage() {
           <div className="md:col-span-2 border-2 border-black rounded-lg p-3 bg-white shadow-[8px_8px_0_0_#000]">
             {error && (
               <div className="text-red-700">
-                {t("error_loading")}:{" "}{String(error)}
+                {t("error_loading")}: {String(error)}
               </div>
             )}
             {isLoading && <div>{t("loading")}</div>}
-            {!isLoading && places.length === 0 && (
-              <div>{t("no_places")}</div>
-            )}
+            {!isLoading && places.length === 0 && <div>{t("no_places")}</div>}
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {places.map((p, idx) => (
                 <li
@@ -128,7 +124,7 @@ export default function DnPlacesPage() {
                         },${p.location!.coordinates[0]}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
+                        className="text-white! bg-black border-2 border-black px-2 py-1 rounded"
                       >
                         {t("open_gg_maps")}
                       </a>

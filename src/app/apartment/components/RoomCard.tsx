@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Room } from "@/types/room";
 import Image from "next/image";
 import { formatVNDLocale, formatDate } from "@/lib/format";
@@ -14,22 +16,28 @@ export default function RoomCard({
 }) {
   const { t, lang } = useI18n();
   const isCheap = room.price <= cheapThreshold;
+
+  const [imgSrc, setImgSrc] = useState<string>(
+    room.images?.[0] || "/home-draw-3.svg"
+  );
+  useEffect(() => {
+    setImgSrc(room.images?.[0] || "/home-draw-3.svg");
+  }, [room.images]);
+  const isFallback = imgSrc === "/home-draw-3.svg";
+
   return (
     <div className="border-2 border-black rounded-lg p-3 flex gap-3 bg-[#fffbe6] shadow-[6px_6px_0_0_#000]">
-      {room.images?.[0] ? (
-        <Image
-          src={room.images[0]}
-          alt={room.title}
-          width={144}
-          height={112}
-          className="w-36 h-28 object-cover rounded-md border-2 border-black"
-          priority
-        />
-      ) : (
-        <div className="w-36 h-28 object-cover rounded-md border-2 border-black bg-[#e0e0e0] flex items-center justify-center text-xs text-gray-700">
-          {t("no_image")}
-        </div>
-      )}
+      <Image
+        src={imgSrc}
+        alt={room.title}
+        width={144}
+        height={112}
+        className={`w-36 h-28 object-cover rounded-md ${
+          isFallback ? "" : "border-2 border-black"
+        }`}
+        priority
+        onError={() => setImgSrc("/home-draw-3.svg")}
+      />
       <div className="flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-extrabold text-lg md:text-xl tracking-tight">
@@ -71,7 +79,8 @@ export default function RoomCard({
           </div>
         )}
         <div className="text-xs text-gray-700 mt-1" suppressHydrationWarning>
-          {t("source_prefix")} {room.source} • {t("posted_prefix")} {formatDate(room.postedAt, lang)}
+          {t("source_prefix")} {room.source} • {t("posted_prefix")}{" "}
+          {formatDate(room.postedAt, lang)}
         </div>
         <div className="mt-2 flex gap-2">
           <a

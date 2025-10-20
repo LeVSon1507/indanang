@@ -158,7 +158,7 @@ export default function DateMapPage() {
                             },${p.location!.coordinates[0]}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
+                            className="text-white! bg-black border-2 border-black px-2 py-1 rounded"
                           >
                             {t("open_gg_maps")}
                           </a>
@@ -203,7 +203,7 @@ export default function DateMapPage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
+                          className="text-white! bg-black border-2 border-black px-2 py-1 rounded"
                         >
                           {t("open_gg_maps")}
                         </a>
@@ -347,7 +347,7 @@ export default function DateMapPage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
+                          className="text-white! bg-black border-2 border-black px-2 py-1 rounded"
                         >
                           {t("open_gg_maps")}
                         </a>
