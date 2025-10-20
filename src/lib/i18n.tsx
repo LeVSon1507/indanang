@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export type Lang = "vi" | "en";
 
@@ -26,6 +32,8 @@ const dictionary: Record<Lang, Record<string, string>> = {
     error_loading: "Lỗi tải dữ liệu",
     error_loading_with_detail: "Lỗi tải dữ liệu: {{detail}}",
     open_map: "Mở bản đồ",
+    subtitle_home:
+      "Tìm phòng trọ giá rẻ tại Đà Nẵng, lọc theo giá, quận, diện tích...",
 
     // Filters
     query_placeholder: "Từ khóa (tiêu đề/địa chỉ)",
@@ -79,14 +87,16 @@ const dictionary: Record<Lang, Record<string, string>> = {
     ai_suggest_button: "Gợi ý bằng AI",
     ai_suggest: "Gợi ý bằng AI",
     ai_suggest_loading: "Đang gợi ý…",
-    ai_hint: "AI trả về danh sách địa điểm ở Đà Nẵng, bạn có thể thêm từng địa điểm vào bản đồ.",
-    ai_suggest_explain: "AI trả về danh sách địa điểm ở Đà Nẵng, bạn có thể thêm từng địa điểm vào bản đồ.",
+    ai_hint:
+      "AI trả về danh sách địa điểm ở Đà Nẵng, bạn có thể thêm từng địa điểm vào bản đồ.",
+    ai_suggest_explain:
+      "AI trả về danh sách địa điểm ở Đà Nẵng, bạn có thể thêm từng địa điểm vào bản đồ.",
     manual_add: "Thêm thủ công",
     manual_add_toggle: "Thêm thủ công",
     pick_on_map_hint: "Bấm lên bản đồ để chọn lat/lng.",
     choose_latlng_hint: "Bấm lên bản đồ để chọn lat/lng.",
-    manual_toggle_hint: "Bật \"Thêm thủ công\" để nhập thông tin.",
-    enable_manual_hint: "Bật \"Thêm thủ công\" để nhập thông tin.",
+    manual_toggle_hint: 'Bật "Thêm thủ công" để nhập thông tin.',
+    enable_manual_hint: 'Bật "Thêm thủ công" để nhập thông tin.',
     suggestions_label: "Gợi ý:",
     suggestions: "Gợi ý:",
     type_label: "Loại:",
@@ -124,6 +134,8 @@ const dictionary: Record<Lang, Record<string, string>> = {
     error_loading: "Error loading data",
     error_loading_with_detail: "Error loading data: {{detail}}",
     open_map: "Open Map",
+    subtitle_home:
+      "Find affordable rentals in Danang, filter by price, district, and area...",
 
     // Filters
     query_placeholder: "Keyword (title/address)",
@@ -183,8 +195,8 @@ const dictionary: Record<Lang, Record<string, string>> = {
     manual_add_toggle: "Manual add",
     pick_on_map_hint: "Click on the map to pick lat/lng.",
     choose_latlng_hint: "Click on the map to pick lat/lng.",
-    manual_toggle_hint: "Enable \"Manual add\" to input details.",
-    enable_manual_hint: "Enable \"Manual add\" to input details.",
+    manual_toggle_hint: 'Enable "Manual add" to input details.',
+    enable_manual_hint: 'Enable "Manual add" to input details.',
     suggestions_label: "Suggestions:",
     suggestions: "Suggestions:",
     type_label: "Type:",
@@ -216,7 +228,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>("vi");
 
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? (localStorage.getItem("app.lang") as Lang | null) : null;
+    const saved =
+      typeof window !== "undefined"
+        ? (localStorage.getItem("app.lang") as Lang | null)
+        : null;
     if (saved === "vi" || saved === "en") {
       setLang(saved);
     }

@@ -8,7 +8,6 @@ import RoomCard from "./components/RoomCard";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
-
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function ApartmentHomePage() {
@@ -79,14 +78,17 @@ export default function ApartmentHomePage() {
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
             {t("title_home")}
           </h1>
-          <div className="mt-3">
+          <p className="mt-2 text-base md:text-sm text-gray-800">
+            {t("subtitle_home")}
+          </p>
+          {/* <div className="mt-3">
             <Link
               href="/dn-map"
               className="inline-block text-sm border-2 border-black px-3 py-1 bg-white rounded hover:bg-[#ffd3e0] shadow-[4px_4px_0_0_#000]"
             >
               {t("open_map")}
             </Link>
-          </div>
+          </div> */}
         </div>
 
         <Filters
