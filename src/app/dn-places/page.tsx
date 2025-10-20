@@ -43,6 +43,7 @@ export default function DnPlacesPage() {
 
   const { data, isLoading, error } = useSWR<PlaceItem[]>(url, fetcher);
   const places = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+
   const { t } = useI18n();
 
   return (
@@ -117,6 +118,7 @@ export default function DnPlacesPage() {
                         {t("see_more")}
                       </a>
                     )}
+
                     {Array.isArray(p.location?.coordinates) && (
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${
