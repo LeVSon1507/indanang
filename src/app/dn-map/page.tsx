@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
-import useSWR from "swr";
 import type { PlaceCategory } from "@/types/place";
 import type {
   MapContainerProps,
@@ -10,6 +9,10 @@ import type {
   MarkerProps,
   PopupProps,
 } from "react-leaflet";
+import { baseInput } from "@/lib/ui";
+import { useDnMap } from "@/hooks/useDnMap";
+import { useI18n } from "@/lib/i18n";
+
 let L: typeof import("leaflet");
 
 if (typeof window !== "undefined") {
@@ -30,36 +33,19 @@ const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), {
 const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), {
   ssr: false,
 }) as React.ComponentType<PopupProps>;
-const ClickPicker = dynamic<ClickPickerProps>(() => import("./ClickPicker"), {
-  ssr: false,
-});
-const PanTo = dynamic(() => import("./PanTo"), {
+const ClickPicker = dynamic<ClickPickerProps>(
+  () => import("./components/ClickPicker"),
+  {
+    ssr: false,
+  }
+);
+const PanTo = dynamic(() => import("./components/PanTo"), {
   ssr: false,
 }) as React.ComponentType<{
   center: [number, number];
   zoom?: number;
   animate?: boolean;
 }>;
-
-// Configure Leaflet marker icons inside component via useEffect (see below)
-
-interface PlaceItem {
-  _id?: string;
-  title: string;
-  address?: string;
-  category: PlaceCategory;
-  location?: { type: "Point"; coordinates: [number, number] };
-  url?: string;
-}
-
-interface SuggestedPlace {
-  title: string;
-  address?: string;
-  category?: PlaceCategory;
-  lat: number;
-  lng: number;
-  url?: string;
-}
 
 type ClickPickerProps = { onPick: (lat: number, lng: number) => void };
 
@@ -80,18 +66,31 @@ const CATEGORIES: PlaceCategory[] = [
 ];
 
 export default function DateMapPage() {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<PlaceCategory>("entertainment");
-  const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
-  const [title, setTitle] = useState("");
-  const [address, setAddress] = useState("");
-  const [desc, setDesc] = useState("");
-  const [loadingSuggest, setLoadingSuggest] = useState(false);
-  const [suggestions, setSuggestions] = useState<SuggestedPlace[]>([]);
-  const [focus, setFocus] = useState<[number, number] | null>(null);
-  const [manualMode, setManualMode] = useState(false);
+  const {
+    query,
+    setQuery,
+    category,
+    setCategory,
+    picked,
+    setPicked,
+    title,
+    setTitle,
+    address,
+    setAddress,
+    desc,
+    setDesc,
+    loadingSuggest,
+    suggestions,
+    focus,
+    setFocus,
+    manualMode,
+    setManualMode,
+    places,
+    addManual,
+    callSuggest,
+    addSuggested,
+  } = useDnMap();
+  const { t } = useI18n();
 
   // Ensure Leaflet marker icons load on client
   useEffect(() => {
@@ -104,118 +103,15 @@ export default function DateMapPage() {
     })();
   }, []);
 
-  const params = new URLSearchParams();
-  params.set("limit", "500");
-  params.set("category", category);
-  const url = `/api/places?${params.toString()}`;
-
-  const { data: placesData, mutate } = useSWR<PlaceItem[]>(url, (u: string) =>
-    fetch(u).then((r) => r.json())
-  );
-  const places: PlaceItem[] = useMemo(
-    () => (Array.isArray(placesData) ? placesData : []),
-    [placesData]
-  );
-
-  async function addManual() {
-    if (!picked) return alert("Bấm lên bản đồ để chọn vị trí");
-    if (!title.trim()) return alert("Nhập tiêu đề địa điểm");
-    const res = await fetch("/api/places", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: title.trim(),
-        description: desc || undefined,
-        address: address || undefined,
-        category,
-        lat: picked.lat,
-        lng: picked.lng,
-        source: "manual",
-      }),
-    });
-    if (!res.ok) {
-      const t = await res.text();
-      alert("Lỗi thêm địa điểm: " + t);
-      return;
-    }
-    setTitle("");
-    setAddress("");
-    setDesc("");
-    setFocus([picked.lat, picked.lng]);
-    setPicked(null);
-    mutate();
-  }
-
-  async function callSuggest() {
-    setLoadingSuggest(true);
-    try {
-      const res = await fetch("/api/places/suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: query || undefined,
-          category,
-          limit: 10,
-          save: false,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "OpenAI error");
-      setSuggestions(
-        Array.isArray(json.items) ? (json.items as SuggestedPlace[]) : []
-      );
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      alert("Lỗi gợi ý: " + msg);
-    } finally {
-      setLoadingSuggest(false);
-    }
-  }
-
-  async function addSuggested(s: SuggestedPlace) {
-    const res = await fetch("/api/places", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: s.title,
-        description: undefined,
-        address: s.address,
-        category: s.category || category,
-        lat: s.lat,
-        lng: s.lng,
-        url: s.url,
-        source: "ai",
-      }),
-    });
-    if (!res.ok) {
-      const t = await res.text();
-      alert("Lỗi thêm gợi ý: " + t);
-      return;
-    }
-    setFocus([s.lat, s.lng]);
-    mutate();
-  }
-
-  const resetManual = () => {
-    setTitle("");
-    setAddress("");
-    setDesc("");
-    setPicked(null);
-    setManualMode(false);
-  };
-
-  const baseInput =
-    "border-2 border-black rounded-md px-3 py-2 w-full bg-white focus:outline-none focus:ring-2 focus:ring-black";
-
   return (
     <div className="min-h-screen bg-[#f0f0f0]">
       <main className="max-w-6xl mx-auto p-4">
         <div className="border-2 border-black rounded-lg p-4 bg-[#c0eb75] shadow-[8px_8px_0_0_#000] mb-4">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-            Bản đồ Đà Nẵng
+            {t("map_title")}
           </h1>
           <p className="text-sm mt-1">
-            Chọn vị trí trên bản đồ hoặc dùng AI để gợi ý địa điểm.
+            {t("map_instruction")}
           </p>
         </div>
 
@@ -240,7 +136,7 @@ export default function DateMapPage() {
                       <div className="text-sm">
                         <div className="font-bold">{p.title}</div>
                         {p.address && <div>{p.address}</div>}
-                        <div>Loại: {p.category}</div>
+                        <div>{t("category_label")}: {p.category}</div>
                         <div className="mt-1 flex gap-2">
                           {p.url && (
                             <a
@@ -249,7 +145,7 @@ export default function DateMapPage() {
                               rel="noreferrer"
                               className="text-black bg-[#a0e7e5] border-2 border-black px-2 py-1 rounded"
                             >
-                              Xem thêm
+                              {t("see_more")}
                             </a>
                           )}
                           <a
@@ -260,7 +156,7 @@ export default function DateMapPage() {
                             rel="noreferrer"
                             className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
                           >
-                            Mở GG Maps
+                            {t("open_gg_maps")}
                           </a>
                         </div>
                       </div>
@@ -270,7 +166,7 @@ export default function DateMapPage() {
               {picked && (
                 <Marker position={[picked.lat, picked.lng]}>
                   <Popup>
-                    <div className="text-sm">Vị trí đã chọn</div>
+                    <div className="text-sm">{t("picked_location")}</div>
                   </Popup>
                 </Marker>
               )}
@@ -285,7 +181,7 @@ export default function DateMapPage() {
                   <Popup>
                     <div className="text-sm">
                       <div className="font-bold">
-                        Gợi ý (chưa lưu): {s.title}
+                        {t("suggestion_unsaved_prefix")} {s.title}
                       </div>
                       {s.address && <div>{s.address}</div>}
                       <div>{s.category}</div>
@@ -297,7 +193,7 @@ export default function DateMapPage() {
                           onClick={() => addSuggested(s)}
                           className="text-black bg-[#c0eb75] border-2 border-black px-2 py-1 rounded"
                         >
-                          Thêm vào map
+                          {t("add_to_map")}
                         </button>
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`}
@@ -305,7 +201,7 @@ export default function DateMapPage() {
                           rel="noreferrer"
                           className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
                         >
-                          Mở GG Maps
+                          {t("open_gg_maps")}
                         </a>
                       </div>
                     </div>
@@ -318,7 +214,7 @@ export default function DateMapPage() {
           <div className="flex flex-col gap-3 p-3 bg-[#f7f7f2] border-2 border-black rounded-lg shadow-[8px_8px_0_0_#000]">
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 select-none cursor-pointer">
-                <span className="text-sm">Thêm thủ công</span>
+                <span className="text-sm">{t("manual_add_toggle")}</span>
                 <div className="relative">
                   <input
                     type="checkbox"
@@ -356,19 +252,19 @@ export default function DateMapPage() {
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Tên địa điểm"
+                  placeholder={t("place_name")}
                   className={baseInput}
                 />
                 <input
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Địa chỉ (tuỳ chọn)"
+                  placeholder={t("place_address_optional")}
                   className={baseInput}
                 />
                 <textarea
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
-                  placeholder="Mô tả (tuỳ chọn)"
+                  placeholder={t("place_desc_optional")}
                   className={baseInput}
                   rows={3}
                 />
@@ -376,15 +272,15 @@ export default function DateMapPage() {
                   onClick={addManual}
                   className="text-black bg-[#ffd3e0] border-2 border-black px-3 py-2 rounded shadow-[4px_4px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
                 >
-                  Thêm thủ công
+                  {t("manual_add")}
                 </button>
                 <div className="text-xs text-gray-700">
-                  Bấm lên bản đồ để chọn lat/lng.
+                  {t("choose_latlng_hint")}
                 </div>
               </div>
             ) : (
               <div className="text-xs text-gray-700 p-2">
-                Bật “Thêm thủ công” để nhập thông tin.
+                {t("enable_manual_hint")}
               </div>
             )}
 
@@ -394,7 +290,7 @@ export default function DateMapPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ví dụ: địa điểm hẹn hò lãng mạn"
+                placeholder={t("ai_query_placeholder")}
                 className={baseInput}
               />
               <button
@@ -402,17 +298,16 @@ export default function DateMapPage() {
                 onClick={callSuggest}
                 className="text-black bg-[#a0e7e5] border-2 border-black px-3 py-2 rounded shadow-[4px_4px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px]"
               >
-                {loadingSuggest ? "Đang gợi ý…" : "Gợi ý bằng AI"}
+                {loadingSuggest ? t("ai_suggest_loading") : t("ai_suggest")}
               </button>
               <div className="text-xs text-gray-700">
-                AI trả về danh sách địa điểm ở Đà Nẵng, bạn có thể thêm từng địa
-                điểm vào bản đồ.
+                {t("ai_suggest_explain")}
               </div>
             </div>
 
             {suggestions.length > 0 && (
               <div className="mt-2">
-                <div className="font-bold mb-2">Gợi ý:</div>
+                <div className="font-bold mb-2">{t("suggestions")}</div>
                 <div className="flex flex-col gap-2 max-h-64 overflow-auto pr-2">
                   {suggestions.map((s, idx) => (
                     <div
@@ -430,7 +325,7 @@ export default function DateMapPage() {
                           onClick={() => addSuggested(s)}
                           className="text-black bg-[#c0eb75] border-2 border-black px-2 py-1 rounded"
                         >
-                          Thêm vào map
+                          {t("add_to_map")}
                         </button>
                         {s.url && (
                           <a
@@ -439,7 +334,7 @@ export default function DateMapPage() {
                             rel="noreferrer"
                             className="text-black bg-[#a0e7e5] border-2 border-black px-2 py-1 rounded"
                           >
-                            Mở link
+                            {t("open_link")}
                           </a>
                         )}
                         <a
@@ -448,7 +343,7 @@ export default function DateMapPage() {
                           rel="noreferrer"
                           className="text-black bg-[#d3d850] border-2 border-black px-2 py-1 rounded"
                         >
-                          Mở GG Maps
+                          {t("open_gg_maps")}
                         </a>
                       </div>
                     </div>

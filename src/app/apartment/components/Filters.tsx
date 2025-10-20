@@ -2,6 +2,8 @@
 
 import React from "react";
 import { Source } from "@/types/room";
+import { baseInput } from "@/lib/ui";
+import { useI18n } from "@/lib/i18n";
 
 type Props = {
   query: string;
@@ -19,7 +21,6 @@ type Props = {
   districts: string[];
   allSources: Source[];
   cheapThreshold: number;
-  // new filters
   minArea: number | "";
   setMinArea: (v: number | "") => void;
   maxArea: number | "";
@@ -60,12 +61,14 @@ export default function Filters({
   hasImages,
   setHasImages,
 }: Props) {
+  const { t, lang } = useI18n();
+
   const toggleSource = (s: Source) => {
     if (sources.includes(s)) setSources(sources.filter((x) => x !== s));
     else setSources([...sources, s]);
   };
 
-  const baseInput = "border-2 border-black rounded-md px-3 py-2 w-full bg-white focus:outline-none focus:ring-2 focus:ring-black";
+  const cheapFormatted = cheapThreshold.toLocaleString(lang === "vi" ? "vi-VN" : "en-US");
 
   return (
     <div className="flex flex-col gap-3 p-4 bg-[#f7f7f2] border-2 border-black rounded-lg shadow-[6px_6px_0_0_#000]">
@@ -73,7 +76,7 @@ export default function Filters({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Từ khóa (tiêu đề/địa chỉ)"
+          placeholder={t("query_placeholder")}
           className={baseInput}
         />
         <div className="flex gap-2">
@@ -84,7 +87,7 @@ export default function Filters({
             onChange={(e) =>
               setMinPrice(e.target.value ? Number(e.target.value) : "")
             }
-            placeholder="Giá min (VND)"
+            placeholder={t("price_min_placeholder")}
             className={baseInput}
           />
           <input
@@ -94,7 +97,7 @@ export default function Filters({
             onChange={(e) =>
               setMaxPrice(e.target.value ? Number(e.target.value) : "")
             }
-            placeholder="Giá max (VND)"
+            placeholder={t("price_max_placeholder")}
             className={baseInput}
           />
         </div>
@@ -103,7 +106,7 @@ export default function Filters({
           onChange={(e) => setDistrict(e.target.value)}
           className={baseInput}
         >
-          <option value="">Tất cả quận/huyện</option>
+          <option value="">{t("district_all")}</option>
           {districts.map((d) => (
             <option key={d} value={d}>
               {d}
@@ -119,16 +122,20 @@ export default function Filters({
             type="number"
             min={0}
             value={minArea}
-            onChange={(e) => setMinArea(e.target.value ? Number(e.target.value) : "")}
-            placeholder="Diện tích min (m²)"
+            onChange={(e) =>
+              setMinArea(e.target.value ? Number(e.target.value) : "")
+            }
+            placeholder={t("area_min_placeholder")}
             className={baseInput}
           />
           <input
             type="number"
             min={0}
             value={maxArea}
-            onChange={(e) => setMaxArea(e.target.value ? Number(e.target.value) : "")}
-            placeholder="Diện tích max (m²)"
+            onChange={(e) =>
+              setMaxArea(e.target.value ? Number(e.target.value) : "")
+            }
+            placeholder={t("area_max_placeholder")}
             className={baseInput}
           />
         </div>
@@ -137,11 +144,11 @@ export default function Filters({
           onChange={(e) => setSort(e.target.value)}
           className={baseInput}
         >
-          <option value="price_asc">Sắp xếp: Giá tăng dần</option>
-          <option value="price_desc">Sắp xếp: Giá giảm dần</option>
-          <option value="recent">Sắp xếp: Mới nhất</option>
-          <option value="area_desc">Sắp xếp: Diện tích lớn</option>
-          <option value="area_asc">Sắp xếp: Diện tích nhỏ</option>
+          <option value="price_asc">{t("sort_price_asc")}</option>
+          <option value="price_desc">{t("sort_price_desc")}</option>
+          <option value="recent">{t("sort_recent")}</option>
+          <option value="area_desc">{t("sort_area_desc")}</option>
+          <option value="area_asc">{t("sort_area_asc")}</option>
         </select>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm font-semibold">
@@ -151,20 +158,21 @@ export default function Filters({
               onChange={(e) => setOwnerOnly(e.target.checked)}
               className="appearance-none w-4 h-4 border-2 border-black bg-white checked:bg-[#ffe066]"
             />
-            Chính chủ
+            {t("filter_owner_only")}
           </label>
           <label className="flex items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"
               checked={hasImages}
               onChange={(e) => setHasImages(e.target.checked)}
-              className="appearance-none w-4 h-4 border-2 border-black bg-white checked:bg-[#a0e7e5]"
+              className="appearance-none w-4 h-4 border-2 border-black bg-white checked:bg-[#c0eb75]"
             />
-            Có hình ảnh
+            {t("filter_has_images")}
           </label>
         </div>
       </div>
 
+      {/* Sources & cheap toggle */}
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm font-semibold">
           <input
@@ -173,19 +181,22 @@ export default function Filters({
             onChange={(e) => setCheapOnly(e.target.checked)}
             className="appearance-none w-4 h-4 border-2 border-black bg-white checked:bg-[#32CD32]"
           />
-          Chỉ hiển thị giá ≤ {cheapThreshold.toLocaleString("vi-VN")} VND
+          {t("filter_cheap_only", { cheap: cheapFormatted })}
         </label>
 
         <div className="flex flex-wrap gap-2">
           {allSources.map((s) => (
-            <label key={s} className="flex items-center gap-2 text-sm font-semibold">
+            <label
+              key={s}
+              className="flex items-center gap-2 text-sm font-semibold"
+            >
               <input
                 type="checkbox"
                 checked={sources.includes(s)}
                 onChange={() => toggleSource(s)}
                 className="appearance-none w-4 h-4 border-2 border-black bg-white checked:bg-[#ffd3e0]"
               />
-              Nguồn: {s}
+              {t("source_label", { source: s })}
             </label>
           ))}
         </div>
