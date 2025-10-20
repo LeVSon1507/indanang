@@ -136,7 +136,7 @@ export default function DateMapPage() {
                       <div className="text-sm">
                         <div className="font-bold">{p.title}</div>
                         {p.address && <div>{p.address}</div>}
-                        <div>{t("category_label")}: {p.category}</div>
+                        <div>{t("category_label")}: {t(`category_${p.category}`)}</div>
                         <div className="mt-1 flex gap-2">
                           {p.url && (
                             <a
@@ -184,7 +184,7 @@ export default function DateMapPage() {
                         {t("suggestion_unsaved_prefix")} {s.title}
                       </div>
                       {s.address && <div>{s.address}</div>}
-                      <div>{s.category}</div>
+                      <div>{t(`category_${s.category ?? category}`)}</div>
                       <div>
                         ({s.lat}, {s.lng})
                       </div>
@@ -245,7 +245,7 @@ export default function DateMapPage() {
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>
-                      {c}
+                      {t(`category_${c}`)}
                     </option>
                   ))}
                 </select>
@@ -316,7 +316,7 @@ export default function DateMapPage() {
                     >
                       <div className="text-sm font-semibold">{s.title}</div>
                       {s.address && <div className="text-xs">{s.address}</div>}
-                      <div className="text-xs">{s.category}</div>
+                      <div className="text-xs">{t(`category_${s.category ?? category}`)}</div>
                       <div className="text-xs">
                         ({s.lat}, {s.lng})
                       </div>

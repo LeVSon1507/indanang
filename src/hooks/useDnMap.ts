@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import type { PlaceCategory } from '@/types/place';
 import { fetcher } from '@/lib/fetcher';
+import { useI18n } from '@/lib/i18n';
 
 export interface PlaceItem {
   _id?: string;
@@ -45,10 +46,11 @@ export function useDnMap() {
     () => (Array.isArray(placesData) ? placesData : []),
     [placesData]
   );
+  const { t } = useI18n();
 
   async function addManual() {
-    if (!picked) return alert('Bấm lên bản đồ để chọn vị trí');
-    if (!title.trim()) return alert('Nhập tiêu đề địa điểm');
+    if (!picked) return alert(t('choose_latlng_hint'));
+    if (!title.trim()) return alert(t('alert_enter_title'));
     const res = await fetch('/api/places', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -63,8 +65,8 @@ export function useDnMap() {
       }),
     });
     if (!res.ok) {
-      const t = await res.text();
-      alert('Lỗi thêm địa điểm: ' + t);
+      const detail = await res.text();
+      alert(t('error_add_place_with_detail', { detail }));
       return;
     }
     setTitle('');
@@ -93,7 +95,7 @@ export function useDnMap() {
       setSuggestions(Array.isArray(json.items) ? (json.items as SuggestedPlace[]) : []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      alert('Lỗi gợi ý: ' + msg);
+      alert(t('error_suggest_with_detail', { detail: msg }));
     } finally {
       setLoadingSuggest(false);
     }
@@ -115,8 +117,8 @@ export function useDnMap() {
       }),
     });
     if (!res.ok) {
-      const t = await res.text();
-      alert('Lỗi thêm gợi ý: ' + t);
+      const detail = await res.text();
+      alert(t('error_add_suggestion_with_detail', { detail }));
       return;
     }
     setFocus([s.lat, s.lng]);

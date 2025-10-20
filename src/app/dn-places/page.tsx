@@ -72,7 +72,7 @@ export default function DnPlacesPage() {
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {t(`category_${c}`)}
                   </option>
                 ))}
               </select>
@@ -103,7 +103,7 @@ export default function DnPlacesPage() {
                 >
                   <div className="font-bold">{p.title}</div>
                   {p.address && <div className="text-sm">{p.address}</div>}
-                  <div className="text-xs">{p.category}</div>
+                  <div className="text-xs">{t(`category_${p.category}`)}</div>
                   {Array.isArray(p.location?.coordinates) && (
                     <div className="text-xs mt-1">
                       ({p.location!.coordinates[1]},{" "}
